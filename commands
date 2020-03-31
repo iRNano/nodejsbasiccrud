@@ -1,0 +1,6 @@
+npm install --save-dev nodemon
+sudo brew services start mongodb-community
+npm install bcryptjs
+npm install jsonwebtoken
+
+node app
