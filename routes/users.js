@@ -14,6 +14,7 @@ router.post("/", (req,res)=>{
 
     User.findOne({username:req.body.username}, (err,user)=>{
         if(user) return res.status(400).json({message: "Username already exists!"})
+      
         // bcrypt.hash(stringpassword, roundsOfSalt, (err, hashedPassword)=>);
         bcrypt.hash(req.body.password, 10, (err,hashedPassword) => {
             const user = new User();
@@ -28,14 +29,26 @@ router.post("/", (req,res)=>{
 });
 
 router.post("/login", (req,res)=> {
-    User.findOneAndDelete({username:req.body.username}, (err,user)=>{
+    User.findOne({username:req.body.username}, ['username', 'password','fullname'],(err,user)=>{
         if(!user) return res.status(404).send("No user found");
-        let token = jwt.sign(user.toJSON(), 'b49-blog', {expiresIn: '1h'});
-        return res.status(200).json({
-            auth:true,
-            message: "Logged in successfully",
-            token
+        bcrypt.compare(req.body.password,user.password,(err,result)=>{
+            
+            if(!result){ 
+                return res.status(401).json({
+                    auth:false,
+                    message: "Invalid Credentials",
+                    token: null
+                })
+            }else{
+                let token = jwt.sign(user.toJSON(), 'b49-blog', {expiresIn: '1h'});
+                return res.status(200).json({
+                    auth:true,
+                    message: "Logged in successfully",
+                    token
+                })
+            }
         })
+        
     })
 })
 //find all
@@ -51,20 +64,21 @@ router.get("/:id", (req,res)=>{
         return res.json(user);
     })
 })
-//update user
+// update user
 
 router.put("/:id", (req,res)=>{
     const user = {}
-    user.fullname = req.params.fullname;
-    user.username = req.params.username;
-    user.password = req.params.password;
+    user.fullname = req.body.fullname;
+    user.username = req.body.username;
+    user.password = req.body.password;
 
+    
     User.findOneAndUpdate({_id:req.params.id}, user, {new:true}, (err,updatedUser)=>{
         return res.json(updatedUser);
     });
 })
 
-//delete user
+delete user
 
 router.delete("/:id", (req, res) => {
     User.findOneAndDelete({_id:params.req.id}, (err,user)=>{
